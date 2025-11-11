@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Kualitas Tidur</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Sleep Taker by 3,5</h1>
+        <p>Silahkan asukkan data anda untuk memperkirakan seberapa nyenyak tidur Anda (Skala 1-10).</p>
+        
+        <form id="sleepForm">
+            <label for="usia">Usia (Tahun):</label>
+            <input type="number" id="usia" name="usia" required>
+
+            <label for="durasi_tidur">Durasi Tidur (Jam):</label>
+            <input type="number" id="durasi_tidur" name="durasi_tidur" min="1" step="0.1" required>
+
+            <label for="tingkat_stress">Tingkat Stres (Skala 1-10):</label>
+            <input type="range" id="tingkat_stress" name="tingkat_stress" min="1" max="10" value="5" oninput="this.nextElementSibling.value=this.value">
+            <output>5</output>
+
+            <label for="aktivitas_fisik_skala">Aktivitas Fisik (Skala 1-10):</label>
+            <input type="range" id="aktivitas_fisik_skala" name="aktivitas_fisik_skala" min="1" max="10" value="5" oninput="this.nextElementSibling.value=this.value">
+            <output>5</output>
+
+            <button type="submit">Prediksi Kualitas Tidur</button>
+        </form>
+
+        <div id="result" class="result-box">
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('sleepForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = new URLSearchParams(formData).toString();
+            const resultBox = document.getElementById('result');
+            
+            resultBox.innerHTML = 'Memproses...';
+            resultBox.className = 'result-box loading';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: data,
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    resultBox.innerHTML = `
+                        <h2>Hasil Prediksi:</h2>
+                        <p class="score"><strong>Skor: ${result.skor_prediksi}</strong></p>
+                        <p class="quality-text"><strong>Kualitas: ${result.kualitas_tidur}</strong></p>
+                    `;
+                    resultBox.className = 'result-box success';
+                } else {
+                    resultBox.innerHTML = `<h2>Error:</h2><p>${result.error}</p>`;
+                    resultBox.className = 'result-box error';
+                }
+
+            } catch (error) {
+                resultBox.innerHTML = `<h2>Error Jaringan:</h2><p>Gagal terhubung ke server. (${error.message})</p>`;
+                resultBox.className = 'result-box error';
+            }
+        });
+    </script>
+</body>
+</html>
